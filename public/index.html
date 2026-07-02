@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evaluador de Estrategias</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Evaluador de Estrategias</h1>
+    <div id="status-badge" class="badge idle">idle</div>
+  </header>
+
+  <main>
+    <section class="panel config-panel">
+      <h2>Configuración</h2>
+      <div class="form-grid">
+        <label>
+          Fecha inicio
+          <input type="date" id="startDate">
+        </label>
+        <label>
+          Fecha fin
+          <input type="date" id="endDate">
+        </label>
+        <label>
+          Factor de aceleración
+          <div class="acceleration-row">
+            <input type="number" id="acceleration" min="1" max="1000" value="10">
+            <label class="max-toggle">
+              <input type="checkbox" id="accelerationMax">
+              Max
+            </label>
+          </div>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <span class="label">Activos <span class="label-hint">(Binance USDT)</span></span>
+        <input type="text" id="asset-search" placeholder="Buscar activo...">
+        <div id="assets-list" class="checkbox-group assets-scroll"></div>
+        <p id="assets-count" class="hint"></p>
+      </div>
+
+      <div class="form-group">
+        <span class="label">Datos disponibles</span>
+        <p class="hint datasets-hint">Rangos y activos ya descargados (no requieren nueva descarga).</p>
+        <div id="datasets-list" class="datasets-list"></div>
+        <p id="cache-status" class="hint"></p>
+      </div>
+
+      <div class="form-group">
+        <span class="label">Estrategias</span>
+        <div id="strategies-list" class="strategy-list"></div>
+      </div>
+
+      <div class="actions">
+        <button id="btn-save" class="btn secondary">Guardar config</button>
+        <button id="btn-download" class="btn primary">Descargar datos</button>
+        <button id="btn-start" class="btn success" disabled>Iniciar</button>
+        <button id="btn-pause" class="btn warning" disabled>Pausar</button>
+        <button id="btn-stop" class="btn danger" disabled>Detener</button>
+      </div>
+      <p id="download-status" class="hint"></p>
+    </section>
+
+    <section class="panel monitor-panel">
+      <div class="clock-row">
+        <h2>Monitoreo</h2>
+        <div class="clock">
+          <span class="clock-label">Tiempo simulado:</span>
+          <span id="sim-clock">—</span>
+        </div>
+      </div>
+
+      <table id="bots-table">
+        <thead>
+          <tr>
+            <th>Bot</th>
+            <th>Budget total</th>
+            <th>Balance</th>
+            <th>P&amp;L</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div id="portfolios-list" class="portfolios-list"></div>
+
+      <div class="chart-container">
+        <canvas id="balance-chart"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

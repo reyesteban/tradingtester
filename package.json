@@ -1,0 +1,12 @@
+{
+  "name": "trader",
+  "version": "1.0.0",
+  "description": "Evaluador de estrategias de trading crypto",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
