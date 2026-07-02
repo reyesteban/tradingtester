@@ -21,6 +21,7 @@ class Clock {
 
   tick() {
     if (!this.current || !this.end) return false;
+    if (this.current.getTime() >= this.end.getTime()) return false;
     const next = this.current.getTime() + INTERVAL_MS;
     if (next > this.end.getTime()) return false;
     this.current = new Date(next);

@@ -1,26 +1,36 @@
 /**
  * Para agregar una estrategia nueva:
  * 1. Creá un archivo .js en esta carpeta (ej: miEstrategia.js)
- * 2. Exportá un objeto con: id, name, defaultParams, onTick
+ * 2. Exportá un objeto con: id, name, description, assetsMode, defaultParams, onTick
  * 3. Reiniciá el servidor — se detecta automáticamente
  *
- * onTick recibe { clock, portfolio, market, params } y retorna:
- * - 'hold' o null: no operar
- * - { side: 'buy'|'sell', symbol, qty? }: una orden
- * - array de órdenes
+ * assetsMode:
+ * - 'single': opera sobre un activo (el usuario elige cuál)
+ * - 'multiple': opera sobre varios activos a la vez
  *
- * El budget inicial es el capital total en USD para operar entre todos
- * los activos. portfolio.cash es el efectivo disponible; portfolio.getPosition(symbol)
- * devuelve la cantidad tenida de cada activo.
+ * onTick recibe params.symbols (array) y params.symbol (primer activo, compat).
  */
 module.exports = {
   id: 'buy-and-hold',
   name: 'Buy & Hold',
-  defaultParams: { symbol: 'BTCUSDT' },
+  description:
+    'Compra los activos seleccionados al inicio del experimento repartiendo el budget en partes iguales, y mantiene las posiciones sin vender.',
+  assetsMode: 'multiple',
+  defaultParams: { symbols: ['BTCUSDT'] },
   onTick({ portfolio, market, params, clock }) {
-    if (portfolio.getPosition(params.symbol) > 0) return 'hold';
-    const price = market.getPrice(params.symbol, clock.current);
-    if (!price) return 'hold';
-    return { side: 'buy', symbol: params.symbol };
+    const symbols = params.symbols ?? [];
+    const pending = symbols.filter((symbol) => portfolio.getPosition(symbol) === 0);
+    if (!pending.length) return 'hold';
+
+    const orders = [];
+    const cashPerSymbol = portfolio.cash / pending.length;
+
+    for (const symbol of pending) {
+      const price = market.getPrice(symbol, clock.current);
+      if (!price) continue;
+      orders.push({ side: 'buy', symbol, qty: cashPerSymbol / price });
+    }
+
+    return orders.length ? orders : 'hold';
   },
 };

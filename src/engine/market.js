@@ -8,6 +8,32 @@ class Market {
     this.candles[symbol] = candles.slice().sort((a, b) => a.t - b.t);
   }
 
+  clear() {
+    this.candles = {};
+  }
+
+  getDataBounds() {
+    const symbols = this.getSymbols();
+    if (!symbols.length) return null;
+
+    let start = -Infinity;
+    let end = Infinity;
+
+    for (const symbol of symbols) {
+      const candles = this.candles[symbol];
+      if (!candles?.length) return null;
+      start = Math.max(start, candles[0].t);
+      end = Math.min(end, candles[candles.length - 1].t);
+    }
+
+    if (start > end) return null;
+
+    return {
+      start: new Date(start),
+      end: new Date(end),
+    };
+  }
+
   getSymbols() {
     return Object.keys(this.candles);
   }

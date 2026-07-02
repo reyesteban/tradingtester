@@ -30,6 +30,18 @@ class Simulator {
 
   _stepOnce() {
     const { clock, market, bots } = this.experiment;
+    const bounds = market.getDataBounds();
+
+    if (!bounds || clock.current.getTime() >= bounds.end.getTime()) {
+      this.paused = false;
+      if (this.timer) {
+        clearTimeout(this.timer);
+        this.timer = null;
+      }
+      this.experiment.status = 'finished';
+      this._emit({ type: 'finished', ...this.experiment.getState() });
+      return true;
+    }
 
     for (const bot of bots) {
       try {
@@ -43,7 +55,7 @@ class Simulator {
       } catch (err) {
         console.error(`Strategy error [${bot.portfolio.name}]:`, err.message);
       }
-      bot.portfolio.snapshot(market, clock.current);
+      bot.portfolio.snapshot(market, clock.current, bot.symbols);
     }
 
     if (!clock.tick()) {
@@ -64,6 +76,7 @@ class Simulator {
     const { clock, market, bots } = this.experiment;
     this._emit({
       type: 'tick',
+      status: this.experiment.status,
       clock: clock.toJSON(),
       bots: bots.map((b) => b.portfolio.toJSON(market, clock.current)),
       history: this.experiment.getHistory(),
@@ -92,6 +105,12 @@ class Simulator {
   start() {
     if (this.experiment.status !== 'ready' && this.experiment.status !== 'paused') {
       throw new Error(`Cannot start from status: ${this.experiment.status}`);
+    }
+    if (!this.experiment.bots.length) {
+      throw new Error('No hay estrategias activas. Marcá al menos una en Configuración.');
+    }
+    if (!this.experiment.ensureClockWithinData()) {
+      throw new Error('Experiment requires downloaded data before starting');
     }
     this.paused = false;
     this.experiment.status = 'running';

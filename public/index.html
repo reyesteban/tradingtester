@@ -6,25 +6,30 @@
   <title>Evaluador de Estrategias</title>
   <link rel="stylesheet" href="/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.2.0/dist/chartjs-plugin-zoom.min.js"></script>
 </head>
 <body>
   <header>
     <h1>Evaluador de Estrategias</h1>
-    <div id="status-badge" class="badge idle">idle</div>
+    <div id="status-badge" class="badge idle" data-tutorial="status">idle</div>
+    <button type="button" id="btn-tutorial" class="btn-tutorial" title="Tutorial de uso">Tutorial</button>
   </header>
 
   <main>
-    <section class="panel config-panel">
+    <section class="panel config-panel" id="config-panel">
+      <div id="config-lockable" class="config-lockable">
       <h2>Configuración</h2>
-      <div class="form-grid">
-        <label>
-          Fecha inicio
-          <input type="date" id="startDate">
-        </label>
-        <label>
-          Fecha fin
-          <input type="date" id="endDate">
-        </label>
+      <div class="form-grid" data-tutorial="dates">
+        <div class="date-range-row">
+          <label>
+            Fecha inicio
+            <input type="text" id="startDate" placeholder="DD/MM/AAAA" inputmode="numeric" autocomplete="off">
+          </label>
+          <label>
+            Fecha fin
+            <input type="text" id="endDate" placeholder="DD/MM/AAAA" inputmode="numeric" autocomplete="off">
+          </label>
+        </div>
         <label>
           Factor de aceleración
           <div class="acceleration-row">
@@ -37,36 +42,47 @@
         </label>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" data-tutorial="assets">
         <span class="label">Activos <span class="label-hint">(Binance USDT)</span></span>
-        <input type="text" id="asset-search" placeholder="Buscar activo...">
-        <div id="assets-list" class="checkbox-group assets-scroll"></div>
+        <input type="text" id="asset-search" placeholder="Buscar y agregar activo..." autocomplete="off">
+        <div id="assets-list" class="assets-search-results"></div>
         <p id="assets-count" class="hint"></p>
+        <span class="label selected-assets-label">Seleccionados</span>
+        <div id="selected-assets-list" class="selected-assets-list"></div>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" data-tutorial="datasets">
         <span class="label">Datos disponibles</span>
-        <p class="hint datasets-hint">Rangos y activos ya descargados (no requieren nueva descarga).</p>
+        <p class="hint datasets-hint">Click en un set para cargarlo; click de nuevo para deseleccionar.</p>
         <div id="datasets-list" class="datasets-list"></div>
         <p id="cache-status" class="hint"></p>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" data-tutorial="strategies">
         <span class="label">Estrategias</span>
         <div id="strategies-list" class="strategy-list"></div>
       </div>
 
-      <div class="actions">
+      <div class="actions config-actions">
         <button id="btn-save" class="btn secondary">Guardar config</button>
         <button id="btn-download" class="btn primary">Descargar datos</button>
+      </div>
+      <div id="download-progress-wrap" class="download-progress-wrap hidden">
+        <div class="progress-bar">
+          <div id="download-progress-bar" class="progress-bar-fill"></div>
+        </div>
+        <p id="download-status" class="hint"></p>
+      </div>
+      </div>
+
+      <div class="actions sim-actions" data-tutorial="actions">
         <button id="btn-start" class="btn success" disabled>Iniciar</button>
         <button id="btn-pause" class="btn warning" disabled>Pausar</button>
         <button id="btn-stop" class="btn danger" disabled>Detener</button>
       </div>
-      <p id="download-status" class="hint"></p>
     </section>
 
-    <section class="panel monitor-panel">
+    <section class="panel monitor-panel" data-tutorial="monitor">
       <div class="clock-row">
         <h2>Monitoreo</h2>
         <div class="clock">
@@ -88,14 +104,42 @@
         <tbody></tbody>
       </table>
 
-      <div id="portfolios-list" class="portfolios-list"></div>
-
       <div class="chart-container">
         <canvas id="balance-chart"></canvas>
       </div>
     </section>
   </main>
 
+  <aside id="tutorial-panel" class="tutorial-panel hidden" aria-hidden="true">
+    <div class="tutorial-header">
+      <h2>Tutorial</h2>
+      <button type="button" id="tutorial-close" class="modal-close" aria-label="Cerrar tutorial">&times;</button>
+    </div>
+    <p id="tutorial-progress" class="tutorial-progress">1 / 9</p>
+    <h3 id="tutorial-title" class="tutorial-title">Bienvenido</h3>
+    <p id="tutorial-body" class="tutorial-body"></p>
+    <label class="tutorial-dismiss">
+      <input type="checkbox" id="tutorial-dismiss">
+      No mostrar de nuevo al abrir
+    </label>
+    <div class="tutorial-nav">
+      <button type="button" id="tutorial-prev" class="btn secondary">Anterior</button>
+      <button type="button" id="tutorial-next" class="btn primary">Siguiente</button>
+    </div>
+  </aside>
+
+  <div id="bot-modal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop" data-close-modal></div>
+    <div class="modal-content" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3 id="modal-bot-name">Bot</h3>
+        <button type="button" id="modal-close" class="modal-close" aria-label="Cerrar">&times;</button>
+      </div>
+      <div id="modal-bot-body"></div>
+    </div>
+  </div>
+
+  <script src="/tutorial.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

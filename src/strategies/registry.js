@@ -43,7 +43,9 @@ function listStrategies() {
   return loadStrategies().map((s) => ({
     id: s.id,
     name: s.name,
+    description: s.description ?? '',
     defaultParams: s.defaultParams ?? {},
+    assetsMode: s.assetsMode ?? 'single',
   }));
 }
 

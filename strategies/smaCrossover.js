@@ -6,9 +6,15 @@ function sma(values) {
 module.exports = {
   id: 'sma-crossover',
   name: 'SMA Crossover',
-  defaultParams: { symbol: 'BTCUSDT', short: 10, long: 30 },
+  description:
+    'Usa dos medias móviles simples (corta y larga). Compra cuando la corta cruza por encima de la larga y vende cuando cruza por debajo.',
+  assetsMode: 'single',
+  defaultParams: { symbols: ['BTCUSDT'], short: 10, long: 30 },
   onTick({ portfolio, market, params, clock }) {
-    const { symbol, short, long } = params;
+    const symbol = params.symbols?.[0] ?? params.symbol;
+    const { short, long } = params;
+    if (!symbol) return 'hold';
+
     const prices = market.getClosePrices(symbol, long, clock.current);
     if (prices.length < long) return 'hold';
 

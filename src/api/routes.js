@@ -1,5 +1,5 @@
 const { listStrategies } = require('../strategies/registry');
-const { listCachedDatasets } = require('../data/cache');
+const { listCachedDatasets, deleteCachedDataset, getCacheStatus } = require('../data/cache');
 const { fetchUsdtSymbols } = require('../data/binance');
 
 function readBody(req) {
@@ -31,11 +31,17 @@ function json(res, statusCode, data) {
 function createRoutes(experiment) {
   const sseClients = new Set();
 
-  experiment.simulator.onTick((event) => {
+  function broadcast(event) {
     const payload = `data: ${JSON.stringify(event)}\n\n`;
     for (const client of sseClients) {
       client.write(payload);
     }
+  }
+
+  experiment.onEvent((event) => broadcast(event));
+
+  experiment.simulator.onTick((event) => {
+    broadcast(event);
   });
 
   async function handler(req, res) {
@@ -44,7 +50,7 @@ function createRoutes(experiment) {
     const method = req.method;
 
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (method === 'OPTIONS') {
@@ -62,6 +68,29 @@ function createRoutes(experiment) {
 
       if (method === 'GET' && pathname === '/api/datasets') {
         json(res, 200, { datasets: listCachedDatasets() });
+        return;
+      }
+
+      if (method === 'DELETE' && pathname === '/api/datasets') {
+        if (experiment.status === 'running' || experiment.status === 'downloading') {
+          json(res, 409, { error: 'Cannot delete datasets while running or downloading' });
+          return;
+        }
+        const body = await readBody(req);
+        if (!body.startDate || !body.endDate) {
+          json(res, 400, { error: 'startDate and endDate are required' });
+          return;
+        }
+        const result = deleteCachedDataset(body.startDate, body.endDate);
+        json(res, 200, {
+          ...result,
+          datasets: listCachedDatasets(),
+          cacheStatus: getCacheStatus(
+            experiment.config.assets,
+            experiment.config.startDate,
+            experiment.config.endDate,
+          ),
+        });
         return;
       }
 
@@ -94,9 +123,24 @@ function createRoutes(experiment) {
         return;
       }
 
-      if (method === 'POST' && pathname === '/api/experiment/download') {
-        await experiment.download();
+      if (method === 'POST' && pathname === '/api/experiment/use-dataset') {
+        const body = await readBody(req);
+        if (!body.startDate || !body.endDate) {
+          json(res, 400, { error: 'startDate and endDate are required' });
+          return;
+        }
+        await experiment.useDataset(body.startDate, body.endDate);
         json(res, 200, experiment.getState());
+        return;
+      }
+
+      if (method === 'POST' && pathname === '/api/experiment/download') {
+        if (experiment.status === 'downloading') {
+          json(res, 409, { error: 'Download already in progress' });
+          return;
+        }
+        experiment.download().catch(() => {});
+        json(res, 202, experiment.getState());
         return;
       }
 
